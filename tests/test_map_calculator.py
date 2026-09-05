@@ -63,3 +63,55 @@ def test_supervisor_consensus_and_audit():
     assert main(["audit", "--task-id", "CLI-TEST-01"]) == 0
     assert main(["chat", "Explain", "specifications"]) == 0
     assert main(["verify-audit"]) == 0
+
+
+def test_cli_audit_with_critical_flag():
+    """Test audit CLI with critical flag."""
+    assert main(["audit", "--task-id", "CRIT-TEST", "--primary", "50", "--critical"]) == 0
+
+
+def test_cli_audit_with_custom_metrics():
+    """Test audit CLI with custom metrics."""
+    result = main([
+        "audit",
+        "--task-id", "METRICS-TEST",
+        "--primary", "30.5",
+        "--secondary", "15.2",
+        "--descriptor", "DISCORDANT_ANOMALY"
+    ])
+    assert result == 0
+
+
+def test_cli_chat_rejects_phi():
+    """Test that chat CLI rejects PHI-containing queries."""
+    result = main(["chat", "Patient", "MRN-12345678", "blood", "test"])
+    assert result != 0, "Chat should reject PHI-containing queries"
+
+
+def test_cli_single_calculation():
+    """Test single calculation CLI."""
+    result = main(["single", "--sbp", "120", "--dbp", "80"])
+    assert result == 0
+
+
+def test_cli_single_with_all_params():
+    """Test single calculation with all parameters."""
+    result = main(["single", "--sbp", "120", "--dbp", "80", "--hr", "72", "--icp", "10"])
+    assert result == 0
+
+
+def test_cli_batch_csv(tmp_path):
+    """Test batch CSV processing CLI."""
+    import csv
+    input_csv = tmp_path / "test_input.csv"
+    output_csv = tmp_path / "test_output.csv"
+
+    with open(input_csv, "w", newline="") as f:
+        writer = csv.writer(f)
+        writer.writerow(["sbp", "dbp", "hr"])
+        writer.writerow(["120", "80", "72"])
+        writer.writerow(["140", "90", "85"])
+
+    result = main(["batch", "-i", str(input_csv), "-o", str(output_csv)])
+    assert result == 0
+    assert output_csv.exists()
