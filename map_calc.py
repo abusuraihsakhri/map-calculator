@@ -15,16 +15,15 @@ Clinical thresholds:
     Normal MAP: 70-100 mmHg
     MAP < 65:   Inadequate organ perfusion (sepsis resuscitation target)
     MAP > 100:  Hypertensive range
-    MAP > 120:  Hypertensive urgency
-    MAP > 130:  Hypertensive emergency (with end-organ damage)
+    High MAP cannot establish hypertensive urgency or emergency without
+    considering systolic/diastolic BP and acute target-organ injury.
 
     Normal Pulse Pressure: 30-50 mmHg
     Wide PP (>50): Aortic regurgitation, hyperthyroidism, anemia
     Narrow PP (<30): Heart failure, tamponade, aortic stenosis
 
-    RPP < 10,000: Normal myocardial O2 demand
-    RPP > 12,000: Elevated heart-rate–pressure product; not diagnostic of ischemia
-    RPP > 20,000: Very elevated heart-rate–pressure product; not diagnostic of ischemia
+    RPP reflects heart-rate–pressure workload; thresholds are not standalone
+    diagnostic criteria for myocardial ischemia.
 
 Stdlib only — no external dependencies.
 """
@@ -59,8 +58,6 @@ def _require_finite(value, label):
     """Reject non-numeric and non-finite measurements before calculation."""
     if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value):
         raise ValueError(f"{label} must be a finite number, got {value!r}")
-
-
 
 
 def mean_arterial_pressure(sbp, dbp):
@@ -133,7 +130,9 @@ def rate_pressure_product(hr, sbp):
         raise ValueError(f"Heart rate must be positive, got {hr}")
     if sbp <= 0:
         raise ValueError(f"SBP must be positive, got {sbp}")
-    return hr * sbp
+    result = hr * sbp
+    _require_finite(result, "Rate pressure product")
+    return result
 
 
 def cerebral_perfusion_pressure(map_val, icp):
@@ -334,7 +333,13 @@ def process_csv(input_path, output_path):
     with open(input_path, newline="", encoding="utf-8-sig") as f:
         reader = csv.DictReader(f)
         fieldnames = list(reader.fieldnames or [])
+        if not {"sbp", "dbp"}.issubset(fieldnames):
+            raise ValueError("CSV must have sbp and dbp column headers")
+        if any(name is None or name.lstrip().startswith(("=", "+", "-", "@")) for name in fieldnames):
+            raise ValueError("CSV contains an invalid or unsafe column header")
         rows = list(reader)
+        if any(None in row for row in rows):
+            raise ValueError("CSV row has more fields than its header")
 
     results = []
     for row in rows:
@@ -364,7 +369,14 @@ def process_csv(input_path, output_path):
         except (ValueError, TypeError, KeyError) as e:
             flat = {"error": str(e)}
 
-        merged = {**row, **{k: str(v) for k, v in flat.items()}}
+        # Prevent spreadsheet formula execution from untrusted passthrough columns.
+        safe_row = {}
+        for key, value in row.items():
+            if isinstance(value, str) and value.lstrip().startswith(("=", "+", "@")):
+                safe_row[key] = "'" + value
+            else:
+                safe_row[key] = value
+        merged = {**safe_row, **{k: str(v) for k, v in flat.items()}}
         results.append(merged)
 
     all_keys = set()
