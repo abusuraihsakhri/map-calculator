@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Map Calculator — Operations Console</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
     <style>
         :root {
             --bg: #090d16;
@@ -20,7 +19,7 @@
         }
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
-            font-family: 'Inter', sans-serif;
+            font-family: system-ui, sans-serif;
             background: var(--bg);
             color: var(--text);
             padding: 2rem;
@@ -78,7 +77,7 @@
             font-family: inherit;
             font-size: 0.9rem;
         }
-        input:focus, textarea:focus { outline: none; border-color: var(--accent); }
+        input:focus-visible, button:focus-visible { outline: 3px solid #fbbf24; outline-offset: 3px; }
         .btn {
             background: var(--accent);
             color: #fff;
@@ -96,7 +95,7 @@
             border: 1px solid var(--border);
             border-radius: 8px;
             padding: 1rem;
-            font-family: 'JetBrains Mono', monospace;
+            font-family: ui-monospace, monospace;
             font-size: 0.85rem;
             color: #10b981;
             height: 380px;
@@ -118,6 +117,8 @@
         }
         .metric-val { font-size: 1.4rem; font-weight: 700; color: #fff; margin-top: 0.25rem; }
         .metric-label { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; }
+        input[type="checkbox"] { width: auto; margin-right: .5rem; }
+        @media(max-width: 750px) { .grid { grid-template-columns: 1fr; } .metrics-bar { grid-template-columns: repeat(2, 1fr); } .header { flex-wrap: wrap; gap: 1rem; } }
     </style>
 </head>
 <body>
@@ -125,26 +126,26 @@
     <div class="header">
         <div class="header-title">
             <h1>Map Calculator</h1>
-            <p>Domain: Clinical & Cryptographic AI | Standard: CAP / CLSI / NIST Standards | LabMind-Atlas Architecture</p>
+            <p>Backend audit console · <a href='/' style='color:#a8cfff'>MAP calculator</a></p>
         </div>
         <div>
-            <span class="badge">Air-Gapped Active</span>
-            <span class="badge" style="background: rgba(16,185,129,0.2); color: #10b981; border-color: #10b981;">Zero-PHI Guard Active</span>
+            <span class="badge">API console</span>
+            <span class="badge" style="background: rgba(16,185,129,0.2); color: #10b981; border-color: #10b981;">Pattern-based identifier checks</span>
         </div>
     </div>
 
     <div class="metrics-bar">
         <div class="metric-box">
             <div class="metric-label">System Status</div>
-            <div class="metric-val" style="color: var(--success);" id="m-status">OPTIMAL</div>
+            <div class="metric-val" style="color: var(--success);" id="m-status">—</div>
         </div>
         <div class="metric-box">
             <div class="metric-label">Tasks Processed</div>
-            <div class="metric-val" id="m-tasks">142</div>
+            <div class="metric-val" id="m-tasks">—</div>
         </div>
         <div class="metric-box">
             <div class="metric-label">Audit Blocks Signed</div>
-            <div class="metric-val" id="m-audit">142</div>
+            <div class="metric-val" id="m-audit">—</div>
         </div>
         <div class="metric-box">
             <div class="metric-label">PHI Interceptions</div>
@@ -154,25 +155,26 @@
 
     <div class="grid">
         <div class="card">
-            <h2>⚙️ Dispatch Distributed Component Audit</h2>
+            <h2>Backend task evaluation</h2>
+            <div class="form-group"><label for="api_key">API key (not stored)</label><input type="password" id="api_key" autocomplete="off" placeholder="MAP_API_KEY"></div>
             <div class="form-group">
-                <label>Task / Sample ID</label>
+                <label for="task_id">Task / Sample ID</label>
                 <input type="text" id="task_id" value="TASK-2026-LIVE-01">
             </div>
             <div class="form-group">
-                <label>Target Identifier</label>
+                <label for="target_id">Target Identifier</label>
                 <input type="text" id="target_id" value="SPECIMEN-ALPHA-77">
             </div>
             <div class="form-group">
-                <label>Primary Measurement / Value</label>
+                <label for="primary_metric">Primary Measurement / Value</label>
                 <input type="number" id="primary_metric" value="29.4" step="0.1">
             </div>
             <div class="form-group">
-                <label>Secondary Metric / Kinetic Index</label>
+                <label for="secondary_metric">Secondary Metric / Kinetic Index</label>
                 <input type="number" id="secondary_metric" value="14.8" step="0.1">
             </div>
             <div class="form-group">
-                <label>Status / Phenotype Descriptor</label>
+                <label for="status_descriptor">Status / Phenotype Descriptor</label>
                 <input type="text" id="status_descriptor" value="DISCORDANT_ANOMALY">
             </div>
             <div class="form-group">
@@ -182,55 +184,46 @@
         </div>
 
         <div class="card">
-            <h2>📊 Real-Time Consensus Dossier & Audit Log</h2>
-            <div class="terminal" id="outputConsole">// Map Calculator Operations Console Ready
-// Connection established with Air-Gapped Supervisor
-// Cryptographic HMAC-SHA256 audit ledger loaded.
-// Ready for live task payload dispatch...</div>
+            <h2>API response</h2>
+            <div class="terminal" id="outputConsole" role="status" aria-live="polite">Enter the backend API key, then submit a task. No simulated results are shown.</div>
         </div>
     </div>
 
     <script>
-        async function runAudit() {
-            const consoleEl = document.getElementById('outputConsole');
-            consoleEl.innerText = "// Dispatching task across specialized workers...
-// Invoking InvariantQCWorker, SafetyEscalationWorker, ProtocolWorker...";
-
-            const payload = {
-                task_id: document.getElementById('task_id').value,
-                target_identifier: document.getElementById('target_id').value,
-                primary_metric: parseFloat(document.getElementById('primary_metric').value),
-                secondary_metric: parseFloat(document.getElementById('secondary_metric').value),
-                status_descriptor: document.getElementById('status_descriptor').value,
-                is_critical_flag: document.getElementById('is_critical').checked
-            };
-
-            try {
-                const res = await fetch('/api/audit', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-                const data = await res.json();
-                consoleEl.innerText = JSON.stringify(data, null, 2);
-                document.getElementById('m-tasks').innerText = parseInt(document.getElementById('m-tasks').innerText) + 1;
-                document.getElementById('m-audit').innerText = parseInt(document.getElementById('m-audit').innerText) + 1;
-            } catch (err) {
-                consoleEl.innerText = "// Offline / Simulation Output:\n" + JSON.stringify({
-                    dossier_id: "DOSSIER-SIM-" + Math.floor(Math.random()*10000),
-                    system: "map-calculator",
-                    domain: "Clinical & Cryptographic AI",
-                    task_id: payload.task_id,
-                    overall_urgency: payload.is_critical_flag ? "CRITICAL_STAT_PANIC" : "ELEVATED_RISK",
-                    integrity_status: "DISCORDANT_ANOMALY",
-                    alerts: [
-                        { worker: "InvariantQCWorker", alert: "Primary metric exceeds upper reference bound" },
-                        { worker: "SafetyEscalationWorker", alert: "Critical emergency interlock flag active" }
-                    ],
-                    audit_hash: "HMAC_SHA256_e83f9a72b941d6c381f9"
-                }, null, 2);
-            }
+    async function runAudit() {
+      const el=document.getElementById('outputConsole');
+      const apiKey=document.getElementById('api_key').value;
+      if (!apiKey) {el.textContent='Enter an API key before sending a request.';return;}
+      const number=(id)=>Number(document.getElementById(id).value);
+      const payload={
+        task_id:document.getElementById('task_id').value,
+        target_identifier:document.getElementById('target_id').value,
+        primary_metric:number('primary_metric'),
+        secondary_metric:number('secondary_metric'),
+        status_descriptor:document.getElementById('status_descriptor').value,
+        is_critical_flag:document.getElementById('is_critical').checked
+      };
+      if (!Number.isFinite(payload.primary_metric)||!Number.isFinite(payload.secondary_metric)) {
+        el.textContent='Both metrics must be finite numbers.';return;
+      }
+      el.textContent='Submitting request...';
+      try {
+        const res=await fetch('/api/audit',{method:'POST',headers:{'Content-Type':'application/json','X-API-Key':apiKey},body:JSON.stringify(payload)});
+        const data=await res.json();
+        if(!res.ok){throw new Error('HTTP '+res.status+': '+JSON.stringify(data));}
+        el.textContent=JSON.stringify(data,null,2);
+        const metrics=await fetch('/metrics',{headers:{'X-API-Key':apiKey}});
+        if(metrics.ok){
+          const counts=await metrics.json();
+          document.getElementById('m-status').textContent='CONNECTED';
+          document.getElementById('m-tasks').textContent=counts.dossiers_processed_total;
+          document.getElementById('m-audit').textContent=counts.audit_blocks_total;
         }
+      }catch(err){
+        document.getElementById('m-status').textContent='UNAVAILABLE';
+        el.textContent='Request failed: '+err.message+'. No results were generated.';
+      }
+    }
     </script>
 </body>
 </html>
