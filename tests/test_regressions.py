@@ -5,7 +5,7 @@ import math
 import pytest
 from fastapi.testclient import TestClient
 
-from map_calc import calculate_map, process_csv, classify_map
+from map_calc import calculate_map, process_csv, classify_map, map_alternative, pulse_pressure
 from agents.api import app
 from agents.base import AuditTrail
 from agents.llm_factory import LLMFactory
@@ -21,6 +21,16 @@ from agents.llm_factory import LLMFactory
 def test_invalid_measurements_rejected(sbp, dbp, hr, icp):
     with pytest.raises(ValueError):
         calculate_map(sbp, dbp, hr=hr, icp=icp)
+
+@pytest.mark.parametrize("function", [map_alternative, pulse_pressure])
+def test_nonfinite_alternate_entry_points(function):
+    with pytest.raises(ValueError):
+        function(math.nan, 80)
+
+
+def test_alternative_large_finite_numbers():
+    assert math.isfinite(map_alternative(1e308, 1e308))
+
 
 def test_nonfinite_classification_rejected():
     with pytest.raises(ValueError):
