@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="Calculate estimated mean arterial pressure, pulse pressure, rate-pressure product, and cerebral perfusion pressure.">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'none'; img-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <title>Mean Arterial Pressure Calculator</title>
+  <link rel="stylesheet" href="./assets/style.css">
+  <script src="./assets/app.js" defer></script>
+</head>
+<body>
+<main>
+  <header>
+    <div class="eyebrow">Hemodynamic tools</div>
+    <h1>Mean arterial pressure calculator</h1>
+    <p class="lead">Estimate MAP and related hemodynamic indices from numeric measurements. All calculations run locally in this browser; no patient data is transmitted.</p>
+  </header>
+  <div class="layout">
+    <section class="panel" aria-labelledby="input-title">
+      <h2 id="input-title">Measurements</h2>
+      <form id="map-form" novalidate>
+        <div class="inputs">
+          <div class="field">
+            <label for="sbp">Systolic blood pressure <span class="unit">(mmHg)</span></label>
+            <input id="sbp" type="number" step="any" min="0" data-label="Systolic pressure" required value="120" inputmode="decimal" autocomplete="off">
+          </div>
+          <div class="field">
+            <label for="dbp">Diastolic blood pressure <span class="unit">(mmHg)</span></label>
+            <input id="dbp" type="number" step="any" min="0" data-label="Diastolic pressure" required value="80" inputmode="decimal" autocomplete="off">
+          </div>
+          <div class="field">
+            <label for="hr">Heart rate <span class="unit">(bpm, optional)</span></label>
+            <input id="hr" type="number" step="any" min="0" data-label="Heart rate" value="72" inputmode="decimal" autocomplete="off">
+          </div>
+          <div class="field">
+            <label for="icp">Intracranial pressure <span class="unit">(mmHg, optional)</span></label>
+            <input id="icp" type="number" step="any" min="0" data-label="Intracranial pressure" value="" inputmode="decimal" autocomplete="off">
+          </div>
+        </div>
+        <p class="hint">The HR and ICP inputs are optional. Leave them blank to omit RPP or CPP.</p>
+        <div class="actions">
+          <button type="submit">Calculate</button>
+          <button type="reset" class="secondary">Clear</button>
+        </div>
+        <p id="error" class="error" role="alert" aria-live="assertive"></p>
+      </form>
+    </section>
+    <section id="results" class="panel" aria-labelledby="result-title" aria-live="polite" hidden>
+      <h2 id="result-title">Calculated values</h2>
+      <div class="values">
+        <div class="metric primary"><div class="name">Mean arterial pressure (MAP)</div><strong id="map-value">—</strong><span class="unit">mmHg</span></div>
+        <div class="metric"><div class="name">Pulse pressure (PP)</div><strong id="pp-value">—</strong><span class="unit">mmHg</span></div>
+        <div class="metric"><div class="name">Rate-pressure product (RPP)</div><strong id="rpp-value">—</strong><span class="unit">bpm × mmHg</span></div>
+        <div class="metric"><div class="name">Cerebral perfusion pressure (CPP)</div><strong id="cpp-value">—</strong><span class="unit">mmHg</span></div>
+      </div>
+      <p class="caption" id="map-equation"></p>
+      <div class="actions"><button id="export" type="button" class="secondary" disabled>Download results CSV</button></div>
+    </section>
+  </div>
+  <aside class="notice" aria-label="Clinical context">
+    <strong>Calculation and interpretation</strong>
+    <p>MAP is estimated as DBP + (SBP − DBP)/3, assuming a typical cardiac cycle at rest. Pulse pressure = SBP − DBP; RPP = HR × SBP; CPP = MAP − ICP. Values are estimates, not direct measurements of tissue perfusion or clinical diagnoses.</p>
+    <p>Context matters: hemodynamics, rhythm, measurement method and individual clinical targets affect interpretation. Do not use a MAP value alone to diagnose shock or hypertensive emergency, or to make treatment decisions.</p>
+  </aside>
+  <footer><p>Offline-capable after page load · No analytics, cookies, or external dependencies · <a href="https://github.com/abusuraihsakhri/map-calculator">Source and Python CLI</a></p></footer>
+</main>
+</body>
+</html>
