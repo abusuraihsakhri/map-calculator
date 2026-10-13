@@ -28,4 +28,7 @@ assert.equal(elements["rpp-value"].textContent,"—");
 elements.icp.value="10";
 elements["map-form"].handlers.submit({preventDefault(){}});
 assert.equal(elements["cpp-value"].textContent,"83.3");
+elements["map-form"].handlers.reset({preventDefault(){}});
+assert.equal(elements.sbp.value,"");
+assert.equal(elements.results.hidden,true);
 console.log("Browser calculation smoke tests passed");
