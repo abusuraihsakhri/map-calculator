@@ -1,248 +1,87 @@
 # Map Calculator
 
-> **Domain:** Clinical Decision Support & Biomedical Computing
-> **Standards:** Clinical Hemodynamic Formulations & ISO/IEC Quality Frameworks
+A mean arterial pressure (MAP) calculator with a standalone browser interface, Python calculation library, CSV batch utility, and an optional FastAPI service.
 
-<div align="center">
+## Features
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-![Python](https://img.shields.io/badge/Python-3.10%20%7C%203.11%20%7C%203.12-3776AB.svg?logo=python&logoColor=white)
-![FastAPI](https://img.shields.io/badge/FastAPI-0.111%2B-009688.svg?logo=fastapi&logoColor=white)
-![Audit Trail](https://img.shields.io/badge/Audit-HMAC--SHA256_Tamper--Evident-brightgreen.svg)
-![Zero-PHI Guard](https://img.shields.io/badge/Guard-Zero--PHI_Outbound-blue.svg)
-![Docker](https://img.shields.io/badge/Docker-Ready-2496ED.svg?logo=docker&logoColor=white)
+- **Browser calculator:** SBP and DBP inputs, optional heart rate and intracranial pressure, instant results, validation, and a CSV download. The browser interface uses no external runtime dependencies.
+- **Python library:** numerical calculations and descriptive threshold classifications.
+- **CLI:** individual calculations and batch CSV processing.
+- **Optional backend:** a separate generic task-audit demonstration with an in-memory HMAC audit chain and API-key-protected endpoints.
 
-</div>
+## Browser use
 
----
+Open `index.html` in a modern browser, or serve the repository with `python -m http.server 8001` and open `http://localhost:8001/`. Enter systolic and diastolic pressures in mmHg and select **Calculate**. HR and ICP are optional.
 
-## What It Does
+All calculations in the standalone browser are performed locally. The interface does not send measurements to a server, use cookies, or retain measurement history. Exported CSV files are saved only when you select **Download results CSV**.
 
-Mean Arterial Pressure (MAP) Calculator
+The browser implementation uses JavaScript, not Pyodide: the arithmetic is simple enough that embedding a Python runtime would substantially increase load time without improving fidelity.
 
-Calculates MAP and related hemodynamic parameters:
+## Equations
 
-- **MAP = DBP + (SBP - DBP) / 3**
-- **Alternative: MAP = (SBP + 2*DBP) / 3** (equivalent)
-- **Pulse Pressure = SBP - DBP** (normal 30-50 mmHg)
-- **Rate Pressure Product (RPP) = HR x SBP** (myocardial O2 demand index)
-- **Cerebral Perfusion Pressure (CPP) = MAP - ICP** (if ICP known)
+| Parameter | Equation |
+| --- | --- |
+| Mean arterial pressure (MAP) | DBP + (SBP − DBP) / 3 |
+| Pulse pressure (PP) | SBP − DBP |
+| Rate-pressure product (RPP) | HR × SBP |
+| Cerebral perfusion pressure (CPP) | MAP − ICP |
 
-### Clinical Thresholds
+MAP calculated from peripheral cuff pressure is an **estimate**, especially at extreme heart rates, unusual waveforms, or altered vascular compliance. Calculated CPP inherits uncertainty in MAP and ICP. A MAP value alone cannot establish organ perfusion, shock, hypertensive urgency, or hypertensive emergency; clinical assessment and individualized targets remain necessary. Threshold categories in the Python API are descriptive, not diagnostic or treatment rules.
 
-| Parameter | Range | Meaning |
-|-----------|-------|---------|
-| MAP < 60 | Critically low | Severe hypoperfusion, immediate intervention |
-| MAP 60-65 | Below sepsis target | Inadequate organ perfusion |
-| MAP 65-70 | Borderline low | Acceptable but monitor closely |
-| MAP 70-100 | Normal | Adequate organ perfusion |
-| MAP 100-120 | Elevated | Hypertensive range |
-| MAP 120-130 | Hypertensive urgency | May need pharmacologic intervention |
-| MAP > 130 | Hypertensive emergency | Risk of end-organ damage |
-| PP < 30 | Narrow | Consider heart failure, tamponade, aortic stenosis |
-| PP 30-50 | Normal | Normal arterial compliance |
-| PP > 50 | Wide | Consider aortic regurgitation, hyperthyroidism, anemia |
-| RPP < 10,000 | Normal | Normal myocardial O2 demand |
-| RPP 12,000-20,000 | Elevated | Increased myocardial ischemia risk |
-| RPP > 20,000 | High risk | High risk of myocardial ischemia |
+## Python CLI
 
----
-
-## Key Capabilities
-
-### Analytical Functions
-
-- **`mean_arterial_pressure(sbp, dbp)`**: Calculate Mean Arterial Pressure
-- **`map_alternative(sbp, dbp)`**: Alternative MAP formula: (SBP + 2*DBP) / 3
-- **`pulse_pressure(sbp, dbp)`**: Calculate Pulse Pressure: PP = SBP - DBP
-- **`rate_pressure_product(hr, sbp)`**: Calculate RPP = HR * SBP
-- **`cerebral_perfusion_pressure(map_val, icp)`**: Calculate CPP = MAP - ICP
-- **`calculate_map(sbp, dbp, hr=None, icp=None)`**: Comprehensive calculation with classifications
-
-### Classification Functions
-
-- **`classify_map(map_val)`**: Classify MAP by clinical thresholds
-- **`classify_pulse_pressure(pp)`**: Classify pulse pressure
-- **`classify_rpp(rpp)`**: Classify Rate Pressure Product
-- **`classify_cpp(cpp)`**: Classify Cerebral Perfusion Pressure
-
-### Enterprise Features
-
-- **Distributed Component Audit Framework**: Multi-worker evaluation with consensus
-- **Zero-PHI Outbound Guard**: Blocks SSNs, MRNs, phone numbers, patient identifiers
-- **HMAC-SHA256 Audit Trail**: Tamper-evident cryptographic logging
-- **FastAPI REST API**: REST endpoints with OpenAPI documentation
-- **Prometheus Metrics**: Operational telemetry export
-
----
-
-## Installation
+The core library and its CSV processor use Python standard-library modules only (Python 3.10+).
 
 ```bash
-# Clone the repository
-git clone https://github.com/abusuraihsakhri/map-calculator.git
-cd map-calculator
-
-# Optional: Create virtual environment
-python -m venv .venv
-source .venv/bin/activate  # Linux/Mac
-# or: .venv\Scripts\activate  # Windows
-
-# Install dependencies (for REST API and enterprise features)
-pip install pydantic fastapi uvicorn
-```
-
-**Note:** The core MAP calculations require no external dependencies (stdlib only).
-
----
-
-## Usage
-
-### CLI Quickstart
-
-#### Single Calculation
-```bash
-python cli.py single --sbp 120 --dbp 80
 python cli.py single --sbp 120 --dbp 80 --hr 72 --icp 10
+python cli.py batch --input sample.csv --output results.csv
+python -m pytest -q
 ```
 
-#### Batch Processing
+For the test suite or optional backend, install the declared dependencies:
+
 ```bash
-python cli.py batch -i sample.csv -o results.csv
+python -m pip install -r requirements-dev.txt
 ```
 
-Expected CSV columns: `sbp`, `dbp` (required), `hr`, `icp` (optional)
+Batch CSV input requires `sbp` and `dbp` columns. Optional columns are `hr` (or `heart_rate`) and `icp`. Invalid measurements are returned in a row-level `error` column. Malformed headers and excess CSV fields fail explicitly. When exporting, formula-like passthrough cells are escaped to reduce spreadsheet injection risk.
 
-#### Distributed Component Audit
-```bash
-python cli.py audit --task-id TASK-001 --primary 25.5 --secondary 10.0
-python cli.py audit --task-id CRIT-001 --primary 50 --critical
-```
+Example Python usage:
 
-#### Supervisor Chat
-```bash
-python cli.py chat "Explain hemodynamic parameters"
-```
-
-#### Verify Audit Trail
-```bash
-python cli.py verify-audit
-```
-
-#### Start REST API Server
-```bash
-python cli.py serve --host 0.0.0.0 --port 8000
-```
-
-### Python API
 ```python
-from map_calc import calculate_map, mean_arterial_pressure, classify_map
-
-# Basic MAP calculation
-map_val = mean_arterial_pressure(120, 80)  # Returns 93.33...
-
-# Comprehensive calculation with classifications
+from map_calc import calculate_map
 result = calculate_map(120, 80, hr=72, icp=10)
-print(result["map_mmhg"])           # 93.3
-print(result["map_classification"]["category"])  # "normal"
-
-# Classification only
-classification = classify_map(85)
-print(classification["description"])  # "Normal (70-100 mmHg)"
+print(result["map_mmhg"])  # 93.3
 ```
 
-### REST API Endpoints
-
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/health` | GET | Health check |
-| `/metrics` | GET | Prometheus-style metrics |
-| `/api/audit` | POST | Process task payload |
-| `/api/chat` | POST | Supervisor chat query |
-| `/api/audit/logs` | GET | Get audit trail |
-
----
-
-## Testing
-
-Run the full test suite:
-```bash
-python -m pytest test_map_calc.py tests/ -v
-```
-
-Run with coverage:
-```bash
-python -m pytest --cov=. --cov-report=html
-```
-
----
-
-## Security
-
-### Environment Variables
-
-| Variable | Description | Required |
-|----------|-------------|----------|
-| `AUDIT_SECRET_KEY` | HMAC-SHA256 key for audit trail signing | Recommended |
-
-**Important:** Set `AUDIT_SECRET_KEY` in production. Without it, a warning is emitted and an insecure default is used.
-
-### PHI Protection
-
-The system includes an active PHI outbound guard that blocks:
-- Medical Record Numbers (MRN)
-- Social Security Numbers
-- Phone numbers
-- Email addresses
-- Patient names (common patterns)
-- Dates of birth
-
----
-
-## Docker Deployment
+## Optional FastAPI service
 
 ```bash
-# Build and run with Docker Compose
-AUDIT_SECRET_KEY=your-secret-key docker-compose up --build
-
-# Or with Docker directly
-docker build -t map-calculator .
-docker run -p 8000:8000 -e AUDIT_SECRET_KEY=your-secret-key map-calculator
+python -m pip install -r requirements.txt
+export MAP_API_KEY="replace-with-a-long-random-api-key"
+export AUDIT_SECRET_KEY="replace-with-a-long-random-audit-key"
+python cli.py serve --host 127.0.0.1 --port 8000
 ```
 
----
+- `/` — browser MAP calculator
+- `/console` — separate backend task-audit console
+- `/health` — public health check
+- `/metrics`, `/api/audit`, `/api/chat`, `/api/audit/logs` — require an `X-API-Key` header matching `MAP_API_KEY`
 
-## Project Structure
+The generic audit workers are **not validated clinical decision-support algorithms**. The chat endpoint currently returns an explicit mock response; no hosted language-model integration is implemented. The task registry and audit logs are held **in memory**, so they are not durable across restarts. Use a persistent logging system if audit retention is required.
 
-```
-map-calculator/
-├── cli.py                 # Command-line interface
-├── map_calc.py            # Core MAP calculations and CSV processing
-├── enrichment.py          # Enrichment engines (analytics, reporting)
-├── simulator.py           # Traffic simulator
-├── sample.csv             # Sample data for batch processing
-├── agents/                # Enterprise distributed component framework
-│   ├── __init__.py
-│   ├── api.py            # FastAPI REST server
-│   ├── base.py           # PHI guard, HMAC audit trail
-│   ├── models.py         # Pydantic data models
-│   ├── supervisor.py     # Supervisor orchestrator
-│   ├── workers.py        # Specialized worker agents
-│   ├── llm_factory.py    # LLM provider factory
-│   ├── metrics.py        # Prometheus metrics collector
-│   ├── learning.py       # Bayesian calibration engine
-│   └── streamer.py       # WebSocket telemetry broadcaster
-├── tests/                # Test suite
-│   ├── test_map_calculator.py
-│   └── test_enrichment.py
-├── web/index.html        # Operations console UI
-├── Dockerfile
-├── docker-compose.yml
-└── benchmark_dataset.json # Test benchmark cases
-```
+For Docker Compose, set `MAP_API_KEY` and `AUDIT_SECRET_KEY` in a local `.env` file or your shell environment, then run `docker compose up --build`. A random temporary audit signing key is used for local development if `AUDIT_SECRET_KEY` is absent; production deployments should set a persistent secret.
 
----
+### Privacy and security limitations
+
+The API's identifier-pattern checks are a **best-effort filter**, not complete PHI detection or HIPAA de-identification. Do not submit identifiable clinical records or expose the demonstration service directly to the public internet. The example API key provides basic access control, not comprehensive identity management, transport security, request rate limiting, or regulatory compliance. Use HTTPS and additional controls for any nonlocal deployment.
+
+## Development and deployment
+
+The browser app is plain HTML, CSS and JavaScript in `index.html` and `assets/`, with relative asset paths for GitHub Pages. The `.github/workflows/pages.yml` workflow publishes those static files from `master` when GitHub Pages is configured with **GitHub Actions** as the publishing source. The FastAPI service is not hosted by GitHub Pages.
+
+Continuous integration runs the Python test suite on multiple Python versions and checks the browser script. The app works in current Chromium, Firefox, and Safari versions with JavaScript enabled; no vendor-specific browser APIs are required beyond Blob URL downloads.
 
 ## License
 
-MIT License - see [LICENSE](LICENSE) for details.
+MIT; see [LICENSE](LICENSE).
