@@ -51,7 +51,11 @@
     }
   }
   form.addEventListener("submit",function(event){event.preventDefault();update();});
-  form.addEventListener("reset",function(){latest=null;error.textContent="";output.hidden=true;exportButton.disabled=true;});
+  form.addEventListener("reset",function(event){
+    event.preventDefault();
+    ["sbp","dbp","hr","icp"].forEach(name=>{document.getElementById(name).value="";});
+    latest=null;error.textContent="";output.hidden=true;exportButton.disabled=true;
+  });
   exportButton.addEventListener("click",function(){
     if(!latest)return;
     const header=["sbp","dbp","hr","icp","map_mmhg","pulse_pressure_mmhg","rpp","cpp_mmhg"];
