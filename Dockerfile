@@ -4,16 +4,19 @@ WORKDIR /app
 
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
-    AUDIT_SECRET_KEY=""
+    PIP_DISABLE_PIP_VERSION_CHECK=1
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Install dependencies
-RUN pip install --no-cache-dir pydantic fastapi uvicorn
+# Install backend dependencies before copying application files.
+COPY requirements.txt ./
+RUN python -m pip install --no-cache-dir -r requirements.txt
 
 COPY . .
+RUN chown -R nobody:nogroup /app
+USER nobody
 
 EXPOSE 8000
 
