@@ -4,7 +4,6 @@
   const error=document.getElementById("error");
   const output=document.getElementById("results");
   const exportButton=document.getElementById("export");
-  const fields=["sbp","dbp","hr","icp"];
   let latest=null;
 
   function read(name,required){
@@ -25,7 +24,12 @@
     if(icp!==null&&icp<0) throw new Error("Intracranial pressure cannot be negative.");
     const map=dbp+(sbp-dbp)/3;
     const pp=sbp-dbp;
-    return {sbp,dbp,hr,icp,map,pp,rpp:hr===null?null:hr*sbp,cpp:icp===null?null:map-icp};
+    const rpp=hr===null?null:hr*sbp;
+    const cpp=icp===null?null:map-icp;
+    if([map,pp,rpp,cpp].some(value=>value!==null&&!Number.isFinite(value))) {
+      throw new Error("Measurements produce values outside the numeric range.");
+    }
+    return {sbp,dbp,hr,icp,map,pp,rpp,cpp};
   }
   function fmt(value){return value===null?"—":value.toFixed(1);}
   function show(result){
