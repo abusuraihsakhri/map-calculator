@@ -89,13 +89,15 @@ def map_alternative(sbp, dbp):
 
     Mathematically equivalent to DBP + (SBP-DBP)/3.
     """
+    _require_finite(sbp, "SBP")
+    _require_finite(dbp, "DBP")
     if sbp <= 0:
         raise ValueError(f"SBP must be positive, got {sbp}")
     if dbp < 0:
         raise ValueError(f"DBP must be non-negative, got {dbp}")
     if dbp > sbp:
         raise ValueError(f"DBP ({dbp}) cannot exceed SBP ({sbp})")
-    return (sbp + 2 * dbp) / 3.0
+    return sbp / 3.0 + 2.0 * (dbp / 3.0)
 
 
 def pulse_pressure(sbp, dbp):
@@ -103,6 +105,8 @@ def pulse_pressure(sbp, dbp):
 
     Normal: 30-50 mmHg.
     """
+    _require_finite(sbp, "SBP")
+    _require_finite(dbp, "DBP")
     if sbp <= 0:
         raise ValueError(f"SBP must be positive, got {sbp}")
     if dbp < 0:
