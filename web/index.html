@@ -212,13 +212,15 @@
         const data=await res.json();
         if(!res.ok){throw new Error('HTTP '+res.status+': '+JSON.stringify(data));}
         el.textContent=JSON.stringify(data,null,2);
-        const metrics=await fetch('/metrics',{headers:{'X-API-Key':apiKey}});
-        if(metrics.ok){
-          const counts=await metrics.json();
-          document.getElementById('m-status').textContent='CONNECTED';
-          document.getElementById('m-tasks').textContent=counts.dossiers_processed_total;
-          document.getElementById('m-audit').textContent=counts.audit_blocks_total;
-        }
+        document.getElementById('m-status').textContent='CONNECTED';
+        try {
+          const metrics=await fetch('/metrics',{headers:{'X-API-Key':apiKey}});
+          if(metrics.ok){
+            const counts=await metrics.json();
+            document.getElementById('m-tasks').textContent=counts.dossiers_processed_total;
+            document.getElementById('m-audit').textContent=counts.audit_blocks_total;
+          }
+        } catch (_) { /* The successful audit response remains visible. */ }
       }catch(err){
         document.getElementById('m-status').textContent='UNAVAILABLE';
         el.textContent='Request failed: '+err.message+'. No results were generated.';
