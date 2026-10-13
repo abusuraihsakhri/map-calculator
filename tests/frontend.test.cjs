@@ -18,7 +18,7 @@ assert.equal(elements["pp-value"].textContent,"40.0");
 assert.equal(elements["rpp-value"].textContent,"8640");
 assert.equal(elements["cpp-value"].textContent,"—");
 assert.equal(elements.results.hidden,false);
-elements.sbp.value="80";
+elements.sbp.value="70";
 elements["map-form"].handlers.submit({preventDefault(){}});
 assert.equal(elements.results.hidden,true);
 assert.match(elements.error.textContent,/Diastolic pressure must be between/);
