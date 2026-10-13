@@ -23,8 +23,8 @@ Clinical thresholds:
     Narrow PP (<30): Heart failure, tamponade, aortic stenosis
 
     RPP < 10,000: Normal myocardial O2 demand
-    RPP > 12,000: Increased myocardial ischemia risk
-    RPP > 20,000: High risk of myocardial ischemia
+    RPP > 12,000: Elevated heart-rate–pressure product; not diagnostic of ischemia
+    RPP > 20,000: Very elevated heart-rate–pressure product; not diagnostic of ischemia
 
 Stdlib only — no external dependencies.
 """
@@ -55,6 +55,14 @@ RPP_HIGH_RISK = 20000
 
 # ── Core calculations ────────────────────────────────────────────────
 
+def _require_finite(value, label):
+    """Reject non-numeric and non-finite measurements before calculation."""
+    if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value):
+        raise ValueError(f"{label} must be a finite number, got {value!r}")
+
+
+
+
 def mean_arterial_pressure(sbp, dbp):
     """Calculate Mean Arterial Pressure.
 
@@ -68,6 +76,8 @@ def mean_arterial_pressure(sbp, dbp):
     >>> mean_arterial_pressure(120, 80)
     93.333...
     """
+    _require_finite(sbp, "SBP")
+    _require_finite(dbp, "DBP")
     if sbp <= 0:
         raise ValueError(f"SBP must be positive, got {sbp}")
     if dbp < 0:
@@ -117,6 +127,8 @@ def rate_pressure_product(hr, sbp):
 
     Reference: Gobel FL, et al. Circulation 1978;57:549-556.
     """
+    _require_finite(hr, "Heart rate")
+    _require_finite(sbp, "SBP")
     if hr <= 0:
         raise ValueError(f"Heart rate must be positive, got {hr}")
     if sbp <= 0:
@@ -136,6 +148,8 @@ def cerebral_perfusion_pressure(map_val, icp):
 
     Reference: Brain Trauma Foundation Guidelines.
     """
+    _require_finite(map_val, "MAP")
+    _require_finite(icp, "ICP")
     if map_val <= 0:
         raise ValueError(f"MAP must be positive, got {map_val}")
     if icp < 0:
@@ -150,52 +164,54 @@ def classify_map(map_val):
 
     Returns a dict with category, description, and clinical significance.
     """
+    _require_finite(map_val, "MAP")
     if map_val < 60:
         return {
             "category": "critically_low",
             "description": "Critically low (<60 mmHg)",
-            "clinical_significance": "Severe hypoperfusion, immediate intervention needed",
+            "clinical_significance": "Potentially impaired perfusion; assess clinical context urgently",
         }
     elif map_val < MAP_SEPSIS_TARGET:
         return {
             "category": "low",
             "description": "Below sepsis target (<65 mmHg)",
-            "clinical_significance": "Inadequate organ perfusion, vasopressors may be needed",
+            "clinical_significance": "Below a common initial septic shock target; management is individualized",
         }
     elif map_val < MAP_NORMAL_LOW:
         return {
             "category": "borderline_low",
             "description": "Borderline low (65-70 mmHg)",
-            "clinical_significance": "Acceptable but monitor closely",
+            "clinical_significance": "Interpret in the context of the patient and measurement conditions",
         }
     elif map_val <= MAP_NORMAL_HIGH:
         return {
             "category": "normal",
             "description": "Normal (70-100 mmHg)",
-            "clinical_significance": "Adequate organ perfusion",
+            "clinical_significance": "MAP alone does not establish adequate tissue perfusion",
         }
     elif map_val <= MAP_URGENCY:
         return {
             "category": "elevated",
             "description": "Elevated (100-120 mmHg)",
-            "clinical_significance": "Hypertensive range, lifestyle modification recommended",
+            "clinical_significance": "Interpret with systolic/diastolic pressure and overall cardiovascular risk",
         }
     elif map_val <= MAP_EMERGENCY:
         return {
             "category": "high",
-            "description": "Hypertensive urgency (120-130 mmHg)",
-            "clinical_significance": "May need pharmacologic intervention",
+            "description": "High MAP (120-130 mmHg)",
+            "clinical_significance": "MAP alone cannot diagnose hypertensive urgency",
         }
     else:
         return {
             "category": "critical_high",
-            "description": "Hypertensive emergency (>130 mmHg)",
-            "clinical_significance": "Risk of end-organ damage, urgent treatment needed",
+            "description": "Very high MAP (>130 mmHg)",
+            "clinical_significance": "MAP alone cannot diagnose hypertensive emergency; evaluate acute organ injury",
         }
 
 
 def classify_pulse_pressure(pp):
     """Classify pulse pressure."""
+    _require_finite(pp, "Pulse pressure")
     if pp < PP_NORMAL_LOW:
         return {
             "category": "narrow",
@@ -218,6 +234,7 @@ def classify_pulse_pressure(pp):
 
 def classify_rpp(rpp):
     """Classify Rate Pressure Product."""
+    _require_finite(rpp, "RPP")
     if rpp < RPP_NORMAL:
         return {
             "category": "normal",
@@ -242,6 +259,7 @@ def classify_rpp(rpp):
 
 def classify_cpp(cpp):
     """Classify Cerebral Perfusion Pressure."""
+    _require_finite(cpp, "CPP")
     if cpp < 50:
         return {
             "category": "critical",
@@ -260,7 +278,7 @@ def classify_cpp(cpp):
     else:
         return {
             "category": "elevated",
-            "description": "Elevated, may increase ICP",
+            "description": "Interpret with the underlying neurologic condition",
         }
 
 
