@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """CLI for Mean Arterial Pressure (MAP) Calculator."""
 import argparse
+import csv
 import json
 import sys
 
@@ -20,8 +21,8 @@ def _run_audit(args):
         payload = SystemTaskPayload(
             task_id=task_id,
             target_identifier=args.target or "CLI-TARGET",
-            primary_metric=args.primary or 10.0,
-            secondary_metric=args.secondary or 5.0,
+            primary_metric=args.primary,
+            secondary_metric=args.secondary,
             status_descriptor=args.descriptor or "NOMINAL",
             is_critical_flag=args.critical,
         )
@@ -126,12 +127,20 @@ def main(argv=None):
     args = parser.parse_args(argv)
 
     if args.command == "single":
-        result = calculate_map(args.sbp, args.dbp, hr=args.hr, icp=args.icp)
-        print(json.dumps(result, indent=2))
+        try:
+            result = calculate_map(args.sbp, args.dbp, hr=args.hr, icp=args.icp)
+        except ValueError as exc:
+            print(f"Invalid measurement: {exc}", file=sys.stderr)
+            return 2
+        print(json.dumps(result, indent=2, allow_nan=False))
         return 0
 
     if args.command == "batch":
-        results = process_csv(args.input, args.output)
+        try:
+            results = process_csv(args.input, args.output)
+        except (OSError, ValueError, csv.Error) as exc:
+            print(f"Batch processing failed: {exc}", file=sys.stderr)
+            return 2
         print(f"Processed {len(results)} records -> {args.output}")
         return 0
 
